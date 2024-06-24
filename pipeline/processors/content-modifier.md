@@ -1,17 +1,44 @@
-# Content Modifier
 
-The **content_modifier** processor allows you to manipulate the metadata/attributes and content of Logs and Traces. 
+The **content_modifier** processor allows you to manipulate the metadata/attributes and content of Logs and Traces.
 
 Similar to the functionality exposed by filters, this processor presents a unified mechanism to perform such operations for data manipulation. The most significant difference is that processors perform better than filters, and when chaining them, there are no encoding/decoding performance penalties.
 
-Note that processors and this specific component can only be enabled using the new YAML configuration format. Classic mode configuration format doesn't support processors.
+> Note that processors and this specific component can only be enabled using the new YAML configuration format. Classic mode configuration format doesn't support processors.
+
+To configure this processor there are two basic concepts that needs to be understood: context and actions.
+
+### Context
+
+The context defines `where` the actions will be applied. Depending of the telemetry signal being processed, different context are available:
+
+#### Log contexts
+
+Every record in Fluent Bit can be sim
+
+| name | description |
+| :-- | :-- |
+| attributes | the log record contains the attributes (metadata) and the body of the message. By setting the context to `attributes` it performs the action or the attributes associated with the log record. |
+| body |  the `body` context refers to the content of the message in the log record, all actions will be applied to the message content. |
+
+__OpenTelemetry Log Contexts__
+
+If you are receiving native OpenTelemetry Logs through the [OpenTelemetry input plugin](), or if the content is being generated from other plugins that packages the content in OpenTelemetry Logs schema, you can use the following additional contexts to operate on Resources and Spans. The following is a list of the supported contexts for OpenTelemetry Logs:
+
+| name | description |
+| :-- | :-- |
+| otel_resource_attributes | modify the Resource attributes |
+| otel_scope_name |  manipulate the Scope name |
+| otel_scope_version | manipulate the scope version |
+| otel_scope_attributes | modify the Scope attributes |
 
 ## Configuration Parameters
+
+Below is a summary of the supported configuration parameters
 
 | Key         | Description |
 | :---------- | :--- |
 | action | Define the operation to run on the target content. This field is mandatory; for more details about the actions available, check the table below. |
-| context | Specify which component of the Telemetry type will be affected. When processing Logs the following contexts are available:  `attributes`  or `body`. When processing Traces the following contexts are available: `span_name`, `span_kind`, `span_status`, `span_attributes`. |
+| context | Specify which component of the Telemetry type will be affected. When processing Logs the following contexts are available: for Logs `attributes` and `body`, for OpenTelemetry Logs `otel_resource_attributes`, `otel_scope_name`, `otel_scope_version` and `otel_scope_attributes` . When processing Traces the following contexts are available: `span_name`, `span_kind`, `span_status`, `span_attributes`. |
 | key | Specify the name of the key that will be used to apply the modification. |
 | value | Based on the action type, `value` might required and represent different things. Check the detailed information for the specific actions. |
 | pattern | Defines a regular expression pattern. This property is only used by the `extract` action. |
@@ -74,7 +101,7 @@ pipeline:
             action: upsert
             key: "key2"
             value: "example"
-            
+
   outputs:
     - name : stdout
       match: '*'
@@ -97,8 +124,8 @@ pipeline:
         logs:
           - name: content_modifier
             action: delete
-            key: "key2"   
-         
+            key: "key2"
+
   outputs:
     - name : stdout
       match: '*'
@@ -168,7 +195,7 @@ pipeline:
             action: extract
             key: "http.url"
             pattern: ^(?<http_protocol>https?):\/\/(?<http_domain>[^\/\?]+)(?<http_path>\/[^?]*)?(?:\?(?<http_query_params>.*))?
-            
+
   outputs:
     - name : stdout
       match: '*'
@@ -198,7 +225,7 @@ pipeline:
             action: convert
             key: key2
             converted_type: boolean
-            
+
   outputs:
     - name : stdout
       match: '*'
